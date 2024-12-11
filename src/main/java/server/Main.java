@@ -15,14 +15,19 @@ import java.util.Random;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-        startTester();
+        if (args.length == 0 || !args[0].equals("--no-tester")) {
+            startTester();
+        }
         Javalin.create(conf -> {
                 conf.jetty.server(() ->
-                    new Server(new QueuedThreadPool(4))
+                    new Server(new QueuedThreadPool(5))
                 );
                 })
                 .get("/fib/{fib}", ctx -> {
                     handleRequest(ctx, newSessionId());
+                })
+                .get("/", ctx -> {
+                    ctx.result("Access via /fib/40");
                 })
                 .start(7070);
         System.in.read();
@@ -33,7 +38,7 @@ public class Main {
         System.out.printf("Handle session %d n = %d\n", sessionId, n);
         var event = new SessionEvent(sessionId, n);
         event.begin();
-        ctx.result("fibonacci: " + fib(n));
+        ctx.result("" + fib(n));
         event.commit();
     }
 
@@ -57,7 +62,7 @@ public class Main {
                     HttpClient.newHttpClient().sendAsync(request, responseInfo -> {
                         return HttpResponse.BodySubscribers.discarding();
                     });
-                    Thread.sleep(10);
+                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
